@@ -129,6 +129,7 @@ const ListicleTable = ({ farms }: any) => {
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
+      top: style.top + 82,
     };
     const farm = farms[index];
     const tokenNames = formatTokenSymbols(farm?.asset.symbol);
@@ -158,11 +159,11 @@ const ListicleTable = ({ farms }: any) => {
         <td className="hidden lg:flex justify-end whitespace-nowrap w-full">
           <FarmAssets logos={farm?.asset.logos} />
         </td>
-        <td className="whitespace-nowrap flex justify-center items-center max-w-[300px] py-8 w-full text-right sm:pr-3 sm:pl-4 dark:text-blueSilver font-bold text-base leading-5 tracking-wide">
+        <td className="whitespace-nowrap flex justify-end items-center max-w-[300px] py-8 w-full text-right sm:pr-4 sm:pl-6 dark:text-blueSilver font-bold text-base leading-5 tracking-wide">
           {toDollarUnits(farm?.tvl)}
         </td>
         <td className="whitespace-nowrap flex w-full max-w-[300px] py-8 pl-0 dark:text-blueSilver font-bold text-base leading-5 tracking-wide">
-          <div className="w-full inline-flex justify-center items-center gap-x-2">
+          <div className="w-full inline-flex justify-end pr-4 items-center gap-x-2">
             {(farm?.apr.base + farm?.apr.reward).toFixed(2)}%
             <YieldBreakdown base={farm?.apr.base} reward={farm?.apr.reward} />
           </div>
@@ -197,98 +198,6 @@ const ListicleTable = ({ farms }: any) => {
     );
   }
 
-  function TableHeader() {
-    return (
-      <div>
-        <thead className="transition duration-200 font-bold text-base leading-5">
-          <tr>
-            <th
-              scope="col"
-              className="pt-9 pb-6 pr-3 text-left pl-8 md:pl-14 lg:pl-28"
-            >
-              <span>Farm</span>
-            </th>
-            <th
-              scope="col"
-              className="hidden lg:table-cell pt-9 pb-6 pl-4 pr-3 sm:pl-6"
-            >
-              <span className="sr-only">Farm Assets</span>
-            </th>
-            <th
-              scope="col"
-              className="px-3 pt-9 pb-6 cursor-pointer"
-              onClick={() => {
-                // handleSort("tvl", true);
-                trackEventWithProperty("table-sorting", {
-                  sortingType: "tvl",
-                });
-              }}
-            >
-              <div className="flex justify-end items-center">
-                <Tooltip
-                  content={
-                    <span>
-                      Total Value Locked. Amount of money currently invested in
-                      the farm, denoted in USD.
-                    </span>
-                  }
-                >
-                  <div>
-                    <span>TVL</span>
-                    {/* {sortStatus.key == "tvl" &&
-                      (sortStatus.order == Order.DESC ? (
-                        <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
-                      ) : (
-                        <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
-                      ))} */}
-                  </div>
-                </Tooltip>
-              </div>
-            </th>
-            <th
-              scope="col"
-              className="flex justify-end px-3 pt-9 pb-6 cursor-pointer"
-              onClick={() => {
-                // handleSort("yield", true);
-                trackEventWithProperty("table-sorting", {
-                  sortingType: "yield",
-                });
-              }}
-            >
-              <Tooltip
-                content={
-                  <span>
-                    The percentage of returns the farm offers on staking for an
-                    year.
-                  </span>
-                }
-              >
-                <div>
-                  <span>APR</span>
-                  {/* {sortStatus.key == "yield" &&
-                    (sortStatus.order == Order.DESC ? (
-                      <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
-                    ) : (
-                      <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
-                    ))} */}
-                </div>
-              </Tooltip>
-            </th>
-            <th
-              scope="col"
-              className="hidden md:table-cell px-3 pt-9 pb-6 pl-2 lg:pl-16 text-left cursor-pointer"
-            >
-              <span>Rewards</span>
-            </th>
-            <th scope="col" className="pt-9 pb-6 pl-4 pr-3 sm:pl-6">
-              <span className="sr-only">Go to farm</span>
-            </th>
-          </tr>
-        </thead>
-      </div>
-    );
-  }
-
   return (
     <>
       <VirtualTable
@@ -296,9 +205,86 @@ const ListicleTable = ({ farms }: any) => {
         width="100%"
         itemCount={farms.length}
         itemSize={142}
-        // header={TableHeader}
+        header={
+          <thead className="transition duration-200 font-bold text-base leading-5">
+            <div className="flex flex-row justify-between">
+              <div className="pt-9 min-w-[265px] py-8 w-full pb-6 pr-4 2xl:pr-8 text-left pl-8 md:pl-14 lg:pl-28">
+                <span>Farm</span>
+              </div>
+              <div className="hidden lg:flex justify-end w-full pr-0">
+                <span className="sr-only">Farm Assets</span>
+              </div>
+              <div
+                className="px-3 w-full cursor-pointer pt-9 pb-6 md:pr-3 sm:pl-0 dark:text-blueSilver"
+                onClick={() => {
+                  // handleSort("tvl", true);
+                  trackEventWithProperty("table-sorting", {
+                    sortingType: "tvl",
+                  });
+                }}
+              >
+                <div className="flex justify-center lg:justify-end items-center pr-6 w-full">
+                  <Tooltip
+                    content={
+                      <span>
+                        Total Value Locked. Amount of money currently invested
+                        in the farm, denoted in USD.
+                      </span>
+                    }
+                  >
+                    <div className="">
+                      <span>TVL</span>
+                      {/* {sortStatus.key == "tvl" &&
+                      (sortStatus.order == Order.DESC ? (
+                        <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
+                      ) : (
+                        <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
+                      ))} */}
+                    </div>
+                  </Tooltip>
+                </div>
+              </div>
+              <div
+                className="flex w-full justify-start lg:justify-end pr-0 pt-9 pb-6 items-center"
+                onClick={() => {
+                  // handleSort("yield", true);
+                  trackEventWithProperty("table-sorting", {
+                    sortingType: "yield",
+                  });
+                }}
+              >
+                <Tooltip
+                  content={
+                    <span>
+                      The percentage of returns the farm offers on staking for
+                      an year.
+                    </span>
+                  }
+                >
+                  <div className="w-full text-right pr-12 cursor-pointer">
+                    <span>APR</span>
+                    {/* {sortStatus.key == "yield" &&
+                    (sortStatus.order == Order.DESC ? (
+                      <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
+                    ) : (
+                      <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
+                    ))} */}
+                  </div>
+                </Tooltip>
+              </div>
+              <div className="hidden md:flex justify-start w-full text-left pt-9 pb-6">
+                <span className="w-full">Rewards</span>
+              </div>
+              <div className="pt-9 w-full pb-6 pl-20 lg:pl-8 2xl:pl-0 pr-0">
+                <span className="sr-only">Visit Farm</span>
+              </div>
+            </div>
+          </thead>
+        }
         row={Row}
       />
+
+      {/* Scroll-to-top Button */}
       {showScrollBtn && (
         <button
           className="fixed bottom-20 sm:bottom-[80px] right-12 sm:right-[120px] z-20 p-[10px] rounded-full hover:scale-105 active:scale-100 bg-bodyGray dark:bg-primaryBlue transition-all ease-in-out duration-200"

@@ -17,20 +17,7 @@ import {
 import FarmsList from "./FarmList";
 import Tooltip from "@components/Library/Tooltip";
 import { trackEventWithProperty } from "@utils/analytics";
-import LoadingSkeleton from "@components/Library/LoadingSkeleton";
-import Button from "@components/Library/Button";
-import ShareFarm from "@components/Library/ShareFarm";
-import Rewards from "@components/Library/Rewards";
-import YieldBreakdown from "@components/Library/YieldBreakdown";
-import toDollarUnits from "@utils/toDollarUnits";
-import FarmAssets from "@components/Library/FarmAssets";
-import FarmBadge from "@components/Library/FarmBadge";
-import {
-  farmURL,
-  formatFarmType,
-  formatFirstLetter,
-  formatTokenSymbols,
-} from "@utils/farmListMethods";
+import { formatTokenSymbols } from "@utils/farmListMethods";
 
 enum Order {
   ASC,
@@ -46,13 +33,66 @@ type ListicleType = {
 const ListicleTable = ({ farms }: any) => {
   const [vpHeight, setVpHeight] = useState(0);
   const [showScrollBtn] = useAtom(showScrollBtnAtom);
+  const [sortStatus, sortStatusSet] = useAtom(sortStatusAtom);
+  const [sortedFarms, sortedFarmsSet] = useAtom(sortedFarmsAtom);
+  const [hideSkeleton, setHideSkeleton] = useState(false);
 
   // reference
   const scrollRef = React.createRef<FixedSizeList<any>>();
 
   useEffect(() => {
+    if (farms.length > 0) handleSort(sortStatus.key, false);
+  }, [farms]);
+
+  useEffect(() => {
     setVpHeight(window.innerHeight);
   }, []);
+
+  // Sorting function for Table
+  const handleSort = (key: string, toggle: boolean) => {
+    let newSortStatus: {
+      key: string;
+      order: number;
+    };
+
+    if (toggle) {
+      newSortStatus = {
+        key,
+        order: sortStatus.order == Order.ASC ? Order.DESC : Order.ASC, // Flip the order
+      };
+      if (key !== sortStatus.key) newSortStatus.order = Order.DESC; // if the key is not same as before, set the Order to DESC
+    } else {
+      newSortStatus = {
+        key,
+        order: sortStatus.order,
+      };
+    }
+
+    sortStatusSet(newSortStatus);
+
+    let sortFn; // to be used to sort the pools
+    if (newSortStatus.key == "tvl") {
+      sortFn = (a: any, b: any) =>
+        newSortStatus.order == Order.ASC
+          ? a.tvl >= b.tvl
+            ? 1
+            : -1
+          : a.tvl < b.tvl
+          ? 1
+          : -1;
+    } else if (newSortStatus.key == "yield") {
+      sortFn = (a: any, b: any) =>
+        newSortStatus.order == Order.ASC
+          ? a.apr.reward + a.apr.base >= b.apr.reward + b.apr.base
+            ? 1
+            : -1
+          : a.apr.reward + a.apr.base < b.apr.reward + b.apr.base
+          ? 1
+          : -1;
+    }
+
+    sortedFarmsSet([...farms].sort(sortFn));
+  };
 
   // Context for cross component communication
   const VirtualTableContext = React.createContext<{
@@ -131,7 +171,7 @@ const ListicleTable = ({ farms }: any) => {
       justifyContent: "space-between",
       top: style.top + 82,
     };
-    const farm = farms[index];
+    const farm = sortedFarms[index];
     const tokenNames = formatTokenSymbols(farm?.asset.symbol);
     return (
       <FarmsList farm={farm} tokenNames={tokenNames} newStyle={newStyle} />
@@ -141,14 +181,16 @@ const ListicleTable = ({ farms }: any) => {
   return (
     <>
       <VirtualTable
-        height={farms.length >= 8 ? vpHeight : 142 * farms.length + 82}
+        height={
+          sortedFarms.length >= 8 ? vpHeight : 142 * sortedFarms.length + 82
+        }
         width="100%"
-        itemCount={farms.length}
+        itemCount={sortedFarms.length}
         itemSize={142}
         header={
           <thead className="transition duration-200 font-bold text-base leading-5">
             <div className="flex flex-row justify-between">
-              <div className="pt-9 min-w-[265px] py-8 w-full pb-6 pr-4 2xl:pr-8 text-left pl-8 md:pl-14 lg:pl-28">
+              <div className="pt-9 min-w-[265px] py-8 w-full pb-6 pr-4 2xl:pr-8 text-left dark:text-blueSilver pl-8 md:pl-14 lg:pl-28">
                 <span>Farm</span>
               </div>
               <div className="hidden lg:flex justify-end w-full pr-0">
@@ -157,37 +199,35 @@ const ListicleTable = ({ farms }: any) => {
               <div
                 className="px-3 w-full cursor-pointer pt-9 pb-6 md:pr-3 sm:pl-0 dark:text-blueSilver"
                 onClick={() => {
-                  // handleSort("tvl", true);
+                  handleSort("tvl", true);
                   trackEventWithProperty("table-sorting", {
                     sortingType: "tvl",
                   });
                 }}
               >
-                <div className="flex justify-center lg:justify-end items-center pr-6 w-full">
-                  <Tooltip
-                    content={
-                      <span>
-                        Total Value Locked. Amount of money currently invested
-                        in the farm, denoted in USD.
-                      </span>
-                    }
-                  >
-                    <div className="">
-                      <span>TVL</span>
-                      {/* {sortStatus.key == "tvl" &&
+                <Tooltip
+                  content={
+                    <span>
+                      Total Value Locked. Amount of money currently invested in
+                      the farm, denoted in USD.
+                    </span>
+                  }
+                >
+                  <div className="flex justify-center lg:justify-end items-center pr-6 w-full">
+                    <span>TVL</span>
+                    {sortStatus.key == "tvl" &&
                       (sortStatus.order == Order.DESC ? (
                         <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
                       ) : (
                         <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
-                      ))} */}
-                    </div>
-                  </Tooltip>
-                </div>
+                      ))}
+                  </div>
+                </Tooltip>
               </div>
               <div
-                className="flex w-full justify-start lg:justify-end pr-0 pt-9 pb-6 items-center"
+                className="flex w-full justify-start lg:justify-end pr-0 pt-9 pb-6 items-center dark:text-blueSilver cursor-pointer"
                 onClick={() => {
-                  // handleSort("yield", true);
+                  handleSort("yield", true);
                   trackEventWithProperty("table-sorting", {
                     sortingType: "yield",
                   });
@@ -201,18 +241,18 @@ const ListicleTable = ({ farms }: any) => {
                     </span>
                   }
                 >
-                  <div className="w-full text-right pr-12 cursor-pointer">
+                  <div className="w-full text-right pr-12">
                     <span>APR</span>
-                    {/* {sortStatus.key == "yield" &&
-                    (sortStatus.order == Order.DESC ? (
-                      <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
-                    ) : (
-                      <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
-                    ))} */}
+                    {sortStatus.key == "yield" &&
+                      (sortStatus.order == Order.DESC ? (
+                        <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
+                      ) : (
+                        <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
+                      ))}
                   </div>
                 </Tooltip>
               </div>
-              <div className="hidden md:flex justify-start w-full text-left pt-9 pb-6">
+              <div className="hidden md:flex justify-start w-full text-left pt-9 pb-6 dark:text-blueSilver">
                 <span className="w-full">Rewards</span>
               </div>
               <div className="pt-9 w-full pb-6 pl-20 lg:pl-8 2xl:pl-0 pr-0">

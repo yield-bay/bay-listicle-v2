@@ -103,7 +103,7 @@ const ListicleTable = ({ farms }: any) => {
   /*
   The Inner component of the virtual list. This is the real deal.
   Capture what would have been the top elements position and apply it to the table
-  Other than that, render an optional header and footer.
+  Other than that, render the header.
 */
   const Inner = React.forwardRef<
     HTMLDivElement,
@@ -134,74 +134,14 @@ const ListicleTable = ({ farms }: any) => {
     const farm = farms[index];
     const tokenNames = formatTokenSymbols(farm?.asset.symbol);
     return (
-      <tr key={`${farm.asset.address}-${farm.tvl}`} style={newStyle}>
-        <td className="whitespace-nowrap min-w-[265px] py-8 text-sm pl-8 md:pl-14 lg:pl-28 w-full">
-          <div>
-            <div className="flex flex-col gap-y-[10px]">
-              <div className="flex flex-row items-center">
-                <div className="dark:text-blueSilver font-bold text-base leading-5">
-                  {tokenNames.map((tokenName, index) => (
-                    <span key={index} className="mr-[3px]">
-                      {tokenName}
-                      {index !== tokenNames.length - 1 && " •"}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="text-mediumGray dark:text-[#9397A6] font-medium text-base leading-5">
-                {formatFirstLetter(farm?.protocol)} on{" "}
-                {formatFirstLetter(farm?.chain)}
-              </div>
-              <FarmBadge type={formatFarmType(farm?.farmType)} />
-            </div>
-          </div>
-        </td>
-        <td className="hidden lg:flex justify-end whitespace-nowrap w-full">
-          <FarmAssets logos={farm?.asset.logos} />
-        </td>
-        <td className="whitespace-nowrap flex justify-end items-center max-w-[300px] py-8 w-full text-right sm:pr-4 sm:pl-6 dark:text-blueSilver font-bold text-base leading-5 tracking-wide">
-          {toDollarUnits(farm?.tvl)}
-        </td>
-        <td className="whitespace-nowrap flex w-full max-w-[300px] py-8 pl-0 dark:text-blueSilver font-bold text-base leading-5 tracking-wide">
-          <div className="w-full inline-flex justify-end pr-4 items-center gap-x-2">
-            {(farm?.apr.base + farm?.apr.reward).toFixed(2)}%
-            <YieldBreakdown base={farm?.apr.base} reward={farm?.apr.reward} />
-          </div>
-        </td>
-        <td className="hidden md:flex justify-start whitespace-nowrap w-full max-w-[300px] h-full py-0 pl-0 lg:pl-6 dark:text-blueSilver font-bold text-base leading-5 tracking-wide">
-          <Rewards rewards={farm?.rewards} />
-        </td>
-        <td className="whitespace-nowrap flex items-center w-full max-w-[288px] py-4 pr-0 md:pr-6 lg:pr-14 text-right text-sm font-medium">
-          <div className="flex flex-row gap-x-3 items-center justify-start lg:justify-center">
-            <div className="text-center">
-              <ShareFarm
-                farm={farm}
-                apr={(farm?.apr.base + farm?.apr.reward).toFixed(2)}
-              />
-            </div>
-            <a href={farmURL(farm)} target="_blank" rel="noreferrer">
-              <Button
-                type="secondary"
-                size="large"
-                onButtonClick={() =>
-                  trackEventWithProperty("go-to-farm", {
-                    protocol: farm?.protocol,
-                  })
-                }
-              >
-                Visit Farm
-              </Button>
-            </a>
-          </div>
-        </td>
-      </tr>
+      <FarmsList farm={farm} tokenNames={tokenNames} newStyle={newStyle} />
     );
   }
 
   return (
     <>
       <VirtualTable
-        height={farms.length >= 8 ? vpHeight : 142 * farms.length}
+        height={farms.length >= 8 ? vpHeight : 142 * farms.length + 82}
         width="100%"
         itemCount={farms.length}
         itemSize={142}

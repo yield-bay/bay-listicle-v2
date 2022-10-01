@@ -18,6 +18,7 @@ import FarmsList from "./FarmList";
 import Tooltip from "@components/Library/Tooltip";
 import { trackEventWithProperty } from "@utils/analytics";
 import { formatTokenSymbols } from "@utils/farmListMethods";
+import LoadingSkeleton from "@components/Library/LoadingSkeleton";
 
 enum Order {
   ASC,
@@ -30,7 +31,7 @@ type ListicleType = {
 };
 
 // Main Component
-const ListicleTable = ({ farms }: any) => {
+const ListicleTable = ({ farms, noResult }: ListicleType) => {
   const [vpHeight, setVpHeight] = useState(0);
   const [showScrollBtn] = useAtom(showScrollBtnAtom);
   const [sortStatus, sortStatusSet] = useAtom(sortStatusAtom);
@@ -41,8 +42,14 @@ const ListicleTable = ({ farms }: any) => {
   const scrollRef = React.createRef<FixedSizeList<any>>();
 
   useEffect(() => {
-    if (farms.length > 0) handleSort(sortStatus.key, false);
-  }, [farms]);
+    if (farms.length > 0) {
+      handleSort(sortStatus.key, false);
+
+      setTimeout(() => {
+        setHideSkeleton(true);
+      }, 500);
+    }
+  }, [farms, setHideSkeleton]);
 
   useEffect(() => {
     setVpHeight(window.innerHeight);
@@ -169,7 +176,7 @@ const ListicleTable = ({ farms }: any) => {
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
-      top: style.top + 82,
+      top: style.top + 0,
     };
     const farm = sortedFarms[index];
     const tokenNames = formatTokenSymbols(farm?.asset.symbol);
@@ -178,91 +185,101 @@ const ListicleTable = ({ farms }: any) => {
     );
   }
 
+  function TableHeader() {
+    return (
+      // <thead className="">
+      <div className="flex flex-row justify-between w-full transition duration-200 font-bold text-base leading-5">
+        <div className="pt-9 min-w-[265px] py-8 w-full pb-6 pr-4 2xl:pr-8 text-left dark:text-blueSilver pl-8 md:pl-14 lg:pl-28">
+          <span>Farm</span>
+        </div>
+        <div className="hidden lg:flex justify-end w-full pr-0">
+          <span className="sr-only">Farm Assets</span>
+        </div>
+        <div
+          className="px-3 w-full cursor-pointer pt-9 pb-6 md:pr-3 sm:pl-0 dark:text-blueSilver"
+          onClick={() => {
+            handleSort("tvl", true);
+            trackEventWithProperty("table-sorting", {
+              sortingType: "tvl",
+            });
+          }}
+        >
+          <Tooltip
+            content={
+              <span>
+                Total Value Locked. Amount of money currently invested in the
+                farm, denoted in USD.
+              </span>
+            }
+          >
+            <div className="flex justify-center lg:justify-end items-center pr-6 w-full">
+              <span>TVL</span>
+              {sortStatus.key == "tvl" &&
+                (sortStatus.order == Order.DESC ? (
+                  <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
+                ) : (
+                  <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
+                ))}
+            </div>
+          </Tooltip>
+        </div>
+        <div
+          className="flex w-full justify-start lg:justify-end pr-0 pt-9 pb-6 items-center dark:text-blueSilver cursor-pointer"
+          onClick={() => {
+            handleSort("yield", true);
+            trackEventWithProperty("table-sorting", {
+              sortingType: "yield",
+            });
+          }}
+        >
+          <Tooltip
+            content={
+              <span>
+                The percentage of returns the farm offers on staking for an
+                year.
+              </span>
+            }
+          >
+            <div className="w-full text-right pr-12">
+              <span>APR</span>
+              {sortStatus.key == "yield" &&
+                (sortStatus.order == Order.DESC ? (
+                  <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
+                ) : (
+                  <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
+                ))}
+            </div>
+          </Tooltip>
+        </div>
+        <div className="hidden md:flex justify-start w-full text-left pt-9 pb-6 dark:text-blueSilver">
+          <span className="w-full">Rewards</span>
+        </div>
+        <div className="pt-9 w-full pb-6 pl-20 lg:pl-8 2xl:pl-0 pr-0">
+          <span className="sr-only">Visit Farm</span>
+        </div>
+      </div>
+      // </thead>
+    );
+  }
+
   return (
     <>
-      <VirtualTable
-        height={
-          sortedFarms.length >= 8 ? vpHeight : 142 * sortedFarms.length + 82
-        }
-        width="100%"
-        itemCount={sortedFarms.length}
-        itemSize={142}
-        header={
-          <thead className="transition duration-200 font-bold text-base leading-5">
-            <div className="flex flex-row justify-between">
-              <div className="pt-9 min-w-[265px] py-8 w-full pb-6 pr-4 2xl:pr-8 text-left dark:text-blueSilver pl-8 md:pl-14 lg:pl-28">
-                <span>Farm</span>
-              </div>
-              <div className="hidden lg:flex justify-end w-full pr-0">
-                <span className="sr-only">Farm Assets</span>
-              </div>
-              <div
-                className="px-3 w-full cursor-pointer pt-9 pb-6 md:pr-3 sm:pl-0 dark:text-blueSilver"
-                onClick={() => {
-                  handleSort("tvl", true);
-                  trackEventWithProperty("table-sorting", {
-                    sortingType: "tvl",
-                  });
-                }}
-              >
-                <Tooltip
-                  content={
-                    <span>
-                      Total Value Locked. Amount of money currently invested in
-                      the farm, denoted in USD.
-                    </span>
-                  }
-                >
-                  <div className="flex justify-center lg:justify-end items-center pr-6 w-full">
-                    <span>TVL</span>
-                    {sortStatus.key == "tvl" &&
-                      (sortStatus.order == Order.DESC ? (
-                        <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
-                      ) : (
-                        <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
-                      ))}
-                  </div>
-                </Tooltip>
-              </div>
-              <div
-                className="flex w-full justify-start lg:justify-end pr-0 pt-9 pb-6 items-center dark:text-blueSilver cursor-pointer"
-                onClick={() => {
-                  handleSort("yield", true);
-                  trackEventWithProperty("table-sorting", {
-                    sortingType: "yield",
-                  });
-                }}
-              >
-                <Tooltip
-                  content={
-                    <span>
-                      The percentage of returns the farm offers on staking for
-                      an year.
-                    </span>
-                  }
-                >
-                  <div className="w-full text-right pr-12">
-                    <span>APR</span>
-                    {sortStatus.key == "yield" &&
-                      (sortStatus.order == Order.DESC ? (
-                        <ChevronDownIcon className="w-3 h-3 inline -mt-0.5 ml-2" />
-                      ) : (
-                        <ChevronUpIcon className="w-3 h-3 inline mb-0.5 ml-2" />
-                      ))}
-                  </div>
-                </Tooltip>
-              </div>
-              <div className="hidden md:flex justify-start w-full text-left pt-9 pb-6 dark:text-blueSilver">
-                <span className="w-full">Rewards</span>
-              </div>
-              <div className="pt-9 w-full pb-6 pl-20 lg:pl-8 2xl:pl-0 pr-0">
-                <span className="sr-only">Visit Farm</span>
-              </div>
-            </div>
-          </thead>
-        }
-        row={Row}
-      />
+      <TableHeader />
+      {hideSkeleton ? (
+        <VirtualTable
+          height={
+            sortedFarms.length >= 8 ? vpHeight : 142 * sortedFarms.length + 82
+          }
+          width="100%"
+          itemCount={sortedFarms.length}
+          itemSize={142}
+          row={Row}
+        />
+      ) : (
+        <tbody className="divide-y divide-[#D9D9D9] dark:divide-[#222A39] transition duration-200">
+          <LoadingSkeleton />
+        </tbody>
+      )}
 
       {/* Scroll-to-top Button */}
       {showScrollBtn && (
